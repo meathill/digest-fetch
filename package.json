@@ -1,0 +1,27 @@
+{
+  "name": "@meathill/digest-fetch",
+  "version": "0.1.0",
+  "description": "A tiny fetch wrapper to add digest auth support, without any dependencies.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node16 --outfile=dist/index.js --minify --sourcemap"
+  },
+  "keywords": [
+    "nuxt",
+    "digest",
+    "fetch"
+  ],
+  "author": "Meathill <meathill@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.3.3",
+    "esbuild": "^0.18.11"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=16.0.0",
+    "chrome": ">=11.0.0",
+    "edge": ">=12.0.0",
+    "safari": ">=5.1"
+  }
+}
