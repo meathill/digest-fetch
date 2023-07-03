@@ -1,12 +1,25 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import FetchError from "./error";
 
-export default async function digestFetch(url: string, data: Record<string, unknown> = {}) {
+type FetchOptions = {
+  method: 'GET' | 'POST',
+  realm: string;
+  username: string;
+  password: string;
+}
+
+export default async function digestFetch(
+  url: string,
+  data: Record<string, unknown>,
+  options: FetchOptions
+): Promise<Response> {
   let nonce = '';
+  options.method ??= 'POST';
+  const { method } = options;
   // first time, send request, get nonce from response
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method,
       headers: {
         'content-type': 'application/json',
       },
@@ -15,7 +28,8 @@ export default async function digestFetch(url: string, data: Record<string, unkn
     if (!response.ok) {
       throw new FetchError({
         statusCode: response.status,
-        message: await response.json(),
+        message: await response.text(),
+        response,
       });
     }
   } catch (e) {
@@ -27,21 +41,27 @@ export default async function digestFetch(url: string, data: Record<string, unkn
     nonce = auth.match(/nonce="([^"]+)"/)[1];
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
+  const init: RequestInit = {
+    method,
     headers: {
-      Authorization: getDigest(url, nonce),
+      Authorization: getDigest(url, nonce, options),
       'content-type': 'application/json',
     },
-    body: JSON.stringify(data),
-  });
+  };
+  if (data) {
+    init.body = JSON.stringify(data);
+  }
+  const response = await fetch(url, init);
 
   if (!response.ok) {
     throw new FetchError({
       statusCode: response.status,
-      message: await response.json(),
+      message: await response.text(),
+      response,
     });
   }
+
+  return response;
 }
 
 function makeNonce(cnonceSize = 32): string {
@@ -53,13 +73,10 @@ function makeNonce(cnonceSize = 32): string {
   return uid;
 }
 
-export function getDigest(url: string, nonce: string): string {
+function getDigest(url: string, nonce: string, options: FetchOptions): string {
   const _url = new URL(url);
-  const uri = _url.pathname;
-  const method = 'POST';
-  const realm = 'tidb.cloud';
-  const username = process.env.TIDB_PUBLIC_KEY;
-  const password = process.env.TIDB_PRIVATE_KEY;
+  const uri = _url.pathname + _url.search;
+  const { method, realm, username, password } = options;
   const nc = '00000001';
   const cnonce = makeNonce();
 
@@ -68,3 +85,5 @@ export function getDigest(url: string, nonce: string): string {
   const response = crypto.createHash('md5').update(`${ha1}:${nonce}:${nc}:${cnonce}:auth:${ha2}`).digest('hex');
   return `Digest username="${username}",realm="${realm}",nonce="${nonce}",uri="${uri}",qop=auth,algorithm=MD5,response="${response}",nc=${nc},cnonce="${cnonce}"`;
 }
+
+export { FetchError };
