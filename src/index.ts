@@ -15,6 +15,16 @@ export default async function digestFetch(
 ): Promise<Response> {
   let nonce = '';
   options.method ??= 'POST';
+  if (!options.realm) {
+    throw new Error('`options.realm` is required');
+  }
+  if (!options.username) {
+    throw new Error('`options.username` is required');
+  }
+  if (!options.password) {
+    throw new Error('`options.password` is required');
+  }
+
   const { method } = options;
   // first time, send request, get nonce from response
   try {

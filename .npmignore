@@ -1,2 +1,4 @@
 src
 pnpm-lock.yaml
+.gitignore
+build.js
