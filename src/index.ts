@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import FetchError from "./error";
 
 type FetchOptions = {
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   realm: string;
   username: string;
   password: string;
@@ -10,7 +10,7 @@ type FetchOptions = {
 
 export default async function digestFetch(
   url: string,
-  data: Record<string, unknown>,
+  data: Record<string, unknown> | null,
   options: FetchOptions
 ): Promise<Response> {
   let nonce = '';
@@ -58,7 +58,7 @@ export default async function digestFetch(
       'content-type': 'application/json',
     },
   };
-  if (data) {
+  if (data && method !== 'GET') {
     init.body = JSON.stringify(data);
   }
   const response = await fetch(url, init);
