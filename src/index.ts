@@ -24,6 +24,12 @@ export default async function digestFetch(
   if (!options.password) {
     throw new Error('`options.password` is required');
   }
+  if (options.method === 'GET' && data) {
+    const newUrl = new URL(url);
+    const params = new URLSearchParams(data as Record<string, string>);
+    newUrl.search = params.toString();
+    url = newUrl.toString();
+  }
 
   const { method } = options;
   // first time, send request, get nonce from response
